@@ -2,6 +2,7 @@ from fastapi import APIRouter, UploadFile, File, Depends, HTTPException
 from sqlalchemy.orm import Session
 from db.sqlite import get_db, Paper
 from services.pdf_parser import extract_text_from_pdf, chunk_text
+from services.embedder import embed_and_store  # 이게 빠져있었어요!
 import uuid
 
 router = APIRouter()
@@ -20,6 +21,9 @@ async def upload_paper(file: UploadFile = File(...), db: Session = Depends(get_d
     chunks = chunk_text(text)
     paper_id = str(uuid.uuid4())
 
+    stored_count = embed_and_store(paper_id, chunks)  # 이것도 빠져있었어요!
+    print(f"[DEBUG] upload complete: {stored_count} chunks stored")
+
     paper = Paper(id=paper_id, filename=file.filename, title=file.filename.replace(".pdf", ""))
     db.add(paper)
     db.commit()
@@ -27,7 +31,7 @@ async def upload_paper(file: UploadFile = File(...), db: Session = Depends(get_d
     return {
         "paper_id": paper_id,
         "filename": file.filename,
-        "chunk_count": len(chunks),
+        "chunk_count": stored_count,
         "preview": chunks[0][:200] if chunks else ""
     }
 

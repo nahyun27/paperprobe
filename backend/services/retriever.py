@@ -3,13 +3,18 @@ from services.embedder import embed_query
 from typing import List
 
 def retrieve_chunks(paper_id: str, query: str, top_k: int = 5) -> List[str]:
-    """질문과 가장 유사한 청크 top_k개 반환"""
     collection = get_collection(paper_id)
+    
+    count = collection.count()
+    if count == 0:
+        return []
+    
+    actual_k = min(top_k, count)
     query_embedding = embed_query(query)
 
     results = collection.query(
         query_embeddings=[query_embedding],
-        n_results=min(top_k, collection.count())
+        n_results=actual_k
     )
 
     return results["documents"][0] if results["documents"] else []

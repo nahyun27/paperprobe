@@ -3,14 +3,16 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from services.retriever import retrieve_chunks
 from typing import List
-import anthropic
+import google.generativeai as genai
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
 
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+model = genai.GenerativeModel("gemini-1.5-flash")
+
 router = APIRouter()
-client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 
 class QueryRequest(BaseModel):
     paper_id: str
@@ -36,14 +38,10 @@ async def query_paper(req: QueryRequest):
 
     prompt = build_prompt(chunks, req.question)
 
-    # 스트리밍 응답 생성기
     def generate():
-        with client.messages.stream(
-            model="claude-sonnet-4-20250514",
-            max_tokens=1024,
-            messages=[{"role": "user", "content": prompt}]
-        ) as stream:
-            for text in stream.text_stream:
-                yield text
+        response = model.generate_content(prompt, stream=True)
+        for chunk in response:
+            if chunk.text:
+                yield chunk.text
 
     return StreamingResponse(generate(), media_type="text/plain")

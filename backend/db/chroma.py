@@ -5,14 +5,16 @@ from dotenv import load_dotenv
 load_dotenv()
 
 CHROMA_PERSIST_DIR = os.getenv("CHROMA_PERSIST_DIR", "./chroma_db")
+os.makedirs(CHROMA_PERSIST_DIR, exist_ok=True)
 
-client = chromadb.PersistentClient(path=CHROMA_PERSIST_DIR)
+client = chromadb.PersistentClient(
+    path=CHROMA_PERSIST_DIR,
+)
 
 def get_collection(paper_id: str):
-    # 논문마다 별도 collection 생성 (없으면 자동 생성)
     return client.get_or_create_collection(
         name=f"paper_{paper_id}",
-        metadata={"hnsw:space": "cosine"}  # 유사도 계산 방식
+        metadata={"hnsw:space": "cosine"}
     )
 
 def delete_collection(paper_id: str):

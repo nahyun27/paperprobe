@@ -2,12 +2,10 @@ fastapi
 uvicorn[standard]
 python-multipart
 pdfplumber
-langchain
-langchain-anthropic
 chromadb==0.4.24
 sentence-transformers==2.7.0
 sqlalchemy
 python-dotenv
 numpy<2.0
-anthropic
+requests
 google-generativeai

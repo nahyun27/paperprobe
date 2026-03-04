@@ -1,0 +1,37 @@
+from fastapi import APIRouter, UploadFile, File, Depends, HTTPException
+from sqlalchemy.orm import Session
+from db.sqlite import get_db, Paper
+from services.pdf_parser import extract_text_from_pdf, chunk_text
+import uuid
+
+router = APIRouter()
+
+@router.post("/upload")
+async def upload_paper(file: UploadFile = File(...), db: Session = Depends(get_db)):
+    if not file.filename.endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="PDF 파일만 업로드 가능합니다.")
+
+    file_bytes = await file.read()
+    text = extract_text_from_pdf(file_bytes)
+
+    if not text:
+        raise HTTPException(status_code=422, detail="텍스트를 추출할 수 없는 PDF입니다.")
+
+    chunks = chunk_text(text)
+    paper_id = str(uuid.uuid4())
+
+    paper = Paper(id=paper_id, filename=file.filename, title=file.filename.replace(".pdf", ""))
+    db.add(paper)
+    db.commit()
+
+    return {
+        "paper_id": paper_id,
+        "filename": file.filename,
+        "chunk_count": len(chunks),
+        "preview": chunks[0][:200] if chunks else ""
+    }
+
+@router.get("/papers")
+def list_papers(db: Session = Depends(get_db)):
+    papers = db.query(Paper).order_by(Paper.uploaded_at.desc()).all()
+    return [{"id": p.id, "filename": p.filename, "uploaded_at": p.uploaded_at} for p in papers]

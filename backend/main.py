@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import upload, query
+from routers import upload, query, compare, graph
 from db.sqlite import init_db
 
 app = FastAPI(title="Paperprobe API")
@@ -15,3 +15,5 @@ app.add_middleware(
 init_db()
 app.include_router(upload.router, prefix="/api")
 app.include_router(query.router, prefix="/api")
+app.include_router(compare.router, prefix="/api")
+app.include_router(graph.router, prefix="/api")

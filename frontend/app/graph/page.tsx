@@ -160,8 +160,8 @@ export default function GraphPage() {
               <button
                 onClick={() => togglePaper(p.id)}
                 className={`flex-1 text-left px-3 py-2 rounded-lg text-sm truncate transition-colors ${selected.has(p.id)
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-800 hover:bg-gray-700 text-gray-300"
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-800 hover:bg-gray-700 text-gray-300"
                   }`}
               >
                 {selected.has(p.id) ? "✓ " : ""}📄 {p.filename}
@@ -177,28 +177,49 @@ export default function GraphPage() {
           ))}
         </div>
 
-        <div className="border-t border-gray-800 pt-4">
+        <div className="border-t border-gray-800 pt-5 pb-2">
           <button
             onClick={handleGenerate}
             disabled={selected.size < 2 || loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 py-2 rounded-lg text-sm font-medium"
+            className={`w-full py-3 rounded-xl text-sm font-semibold shadow-sm transition-all duration-200 ${selected.size < 2 || loading
+                ? "bg-gray-800 text-gray-500 cursor-not-allowed"
+                : "bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25 cursor-pointer"
+              }`}
           >
-            {loading ? "생성 중..." : `그래프 생성 (${selected.size}개)`}
+            {loading ? "생성 중..." : `그래프 생성하기 (${selected.size}개)`}
           </button>
         </div>
       </div>
 
       {/* 그래프 영역 */}
-      <div className="flex-1 relative">
-        <svg ref={svgRef} className="w-full h-full" />
+      <div className="flex-1 relative bg-gray-950">
+        <div className="absolute top-0 left-0 w-full p-6 pointer-events-none z-10 flex justify-between items-start">
+          <h2 className="font-semibold text-gray-200 bg-gray-900/80 backdrop-blur px-4 py-2 rounded-xl border border-gray-800 shadow-sm">
+            유사도 네트워크 시각화
+          </h2>
+        </div>
+
+        <svg ref={svgRef} className="w-full h-full cursor-move" />
+
         {loading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-950 bg-opacity-80 text-gray-400">
-            그래프 생성 중...
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-950/80 backdrop-blur-sm z-20">
+            <div className="flex flex-col items-center gap-4">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"></div>
+              <p className="text-gray-300 font-medium tracking-wide">그래프 분석 중...</p>
+            </div>
           </div>
         )}
+
         {!hasGraph && !loading && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <p className="text-gray-600 text-sm">논문을 선택하고 그래프 생성 버튼을 눌러주세요</p>
+            <div className="text-center flex flex-col items-center gap-4">
+              <span className="text-5xl opacity-30">🕸️</span>
+              <p className="text-gray-500 max-w-sm leading-relaxed">
+                {selected.size < 2
+                  ? "왼쪽 패널에서 2개 이상의 논문을 선택하여 노드 기반 관계도 그래프를 생성하세요."
+                  : "하단의 '그래프 생성하기' 버튼을 눌러 시각화를 시작하세요."}
+              </p>
+            </div>
           </div>
         )}
       </div>

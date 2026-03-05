@@ -40,63 +40,77 @@ export default function SecurityPage() {
   return (
     <div className="flex h-screen bg-gray-950 text-gray-100">
       {/* 사이드바 */}
-      <div className="w-72 border-r border-gray-800 flex flex-col p-4 gap-4">
-        <Link href="/" className="text-blue-400 hover:text-blue-300 text-sm">
-          ← 돌아가기
+      <div className="w-72 border-r border-gray-800 bg-gradient-to-b from-gray-900 to-gray-950 flex flex-col p-4 gap-4">
+        <Link href="/" className="text-blue-400 hover:text-blue-300 text-sm flex items-center gap-1 w-fit transition-colors">
+          <span>←</span> 홈으로 돌아가기
         </Link>
-        <h1 className="text-xl font-bold">🔐 보안 분석</h1>
-        <p className="text-xs text-gray-400">데이터를 분석하여 프롬프트 인젝션 취약점을 탐지합니다</p>
+        <h1 className="text-xl font-bold text-white">🔐 보안 분석</h1>
+        <p className="text-xs text-gray-400 leading-relaxed">데이터를 스캔하여 프롬프트 인젝션 취약점을 탐지합니다.</p>
 
-        <div className="flex flex-col gap-2 overflow-y-auto flex-1 mt-2">
+        <div className="flex flex-col gap-2 overflow-y-auto flex-1 mt-2 pr-1">
           {papers.map((p) => (
-            <button
+            <div
               key={p.id}
               onClick={() => { setSelectedPaper(p); setSecurityData(null); }}
-              className={`text-left px-3 py-2 rounded-lg text-sm truncate transition-colors ${selectedPaper?.id === p.id
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-800 hover:bg-gray-700 text-gray-300"
+              className={`group flex items-center gap-2 px-3 py-2 rounded-xl transition-all duration-150 cursor-pointer ${selectedPaper?.id === p.id
+                  ? "bg-blue-600/20 border-l-2 border-blue-400 text-blue-100"
+                  : "bg-gray-800/50 hover:bg-gray-700/70 hover:border-l-2 hover:border-blue-500 hover:translate-x-1"
                 }`}
             >
-              📄 {p.filename}
-            </button>
+              <div className="flex-1 text-sm truncate flex items-center">
+                <span className="mr-1">📄</span> {p.filename}
+              </div>
+            </div>
           ))}
         </div>
 
-        <div className="border-t border-gray-800 pt-4">
+        <div className="border-t border-gray-800 pt-5 pb-2">
           <button
             onClick={handleAnalyze}
             disabled={!selectedPaper || loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 py-2 rounded-lg text-sm font-medium"
+            className={`w-full py-3 rounded-xl text-sm font-semibold shadow-sm transition-all duration-200 ${!selectedPaper || loading
+                ? "bg-gray-800 text-gray-500 cursor-not-allowed"
+                : "bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25 cursor-pointer"
+              }`}
           >
-            {loading ? "분석 중..." : `보안 검사 실행`}
+            {loading ? "분석 스캔 중..." : `보안 검사 실행`}
           </button>
         </div>
       </div>
 
       {/* 결과 영역 */}
-      <div className="flex-1 flex flex-col">
-        <div className="border-b border-gray-800 px-6 py-4">
-          <h2 className="font-semibold text-gray-200">
-            {selectedPaper ? `[${selectedPaper.filename}] 분석 결과` : "논문을 선택해주세요"}
-          </h2>
+      <div className="flex-1 flex flex-col bg-gray-950">
+        <div className="border-b border-gray-800 px-6 py-4 shadow-sm z-10 flex flex-col gap-2">
+          <div className="flex items-center gap-3">
+            <h2 className="font-semibold text-gray-200">
+              {selectedPaper ? `[${selectedPaper.filename}] 분석 결과` : "논문을 선택해주세요"}
+            </h2>
+            {selectedPaper && securityData && (
+              <span className={`px-2 py-0.5 text-xs font-bold rounded-md border ${securityData.is_safe ? "bg-green-900/40 text-green-400 border-green-800/50" : "bg-red-900/40 text-red-400 border-red-800/50"
+                }`}>
+                {securityData.is_safe ? "SAFE" : "VULNERABLE"}
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 py-6 p-6">
           {!securityData && !loading && (
-            <div className="text-center text-gray-500 mt-20">
-              분석할 논문을 왼쪽에서 선택하고 검사를 실행해주세요.
+            <div className="text-center text-gray-500 mt-32 flex flex-col items-center gap-4">
+              <span className="text-5xl opacity-30">🛡️</span>
+              <p className="max-w-sm leading-relaxed">분석할 논문을 왼쪽 패널에서 선택하고 '<span className="font-medium text-gray-400">보안 검사 실행</span>'을 눌러주세요.</p>
             </div>
           )}
 
           {loading && (
-            <div className="flex flex-col items-center justify-center h-full text-gray-400 gap-4">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              <span>보안 분석을 진행하는 중입니다...</span>
+            <div className="flex flex-col items-center justify-center mt-32 text-gray-400 gap-4">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+              <span className="tracking-wide">보안 분석 엔진이 데이터를 스캔 중입니다...</span>
             </div>
           )}
 
           {securityData && !loading && (
-            <div className="flex flex-col gap-6 w-full max-w-5xl mx-auto">
+            <div className="flex flex-col gap-6 w-full max-w-5xl mx-auto animate-in fade-in slide-in-from-bottom-2 duration-300">
               {/* 요약 카드 */}
               <div className={`p-6 rounded-2xl border ${securityData.is_safe ? 'bg-green-950/20 border-green-900/50' : 'bg-red-950/20 border-red-900/50'}`}>
                 <div className="flex items-center gap-3 mb-4">

@@ -195,21 +195,6 @@ paperprobe/
 
 ---
 
-## Roadmap
-
-- [x] Project structure setup
-- [x] PDF upload & parsing
-- [x] Per-paper embedding & ChromaDB storage
-- [x] Single paper Q&A with streaming
-- [x] Multi-paper comparison (max 5)
-- [x] Cosine similarity graph (D3.js)
-- [x] Paper delete feature
-- [x] Prompt injection detection & defense
-- [ ] Demo screenshots
-- [ ] Deployment
-
----
-
 ## Author
 
 Becky | AI Security Research @ Hanyang University ERICA, ACE-LAB

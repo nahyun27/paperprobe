@@ -4,22 +4,6 @@ Next.js 기반 프론트엔드. 논문 Q&A, 비교 분석, 유사도 그래프, 
 
 ---
 
-## Demo
-
-### 📄 Paper Q&A
-![Q&A Demo](assets/demo_qa.gif)
-
-### ⚖️ Multi-paper Comparison
-![Compare Demo](assets/demo_compare.gif)
-
-### 🕸️ Relationship Graph
-![Graph Demo](assets/demo_graph.gif)
-
-### 🔐 Prompt Injection Detection
-![Security Demo](assets/demo_security.gif)
-
-
-
 ## Tech Stack
 
 - **Framework**: Next.js 16 (App Router)

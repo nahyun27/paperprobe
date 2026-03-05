@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from services.retriever import retrieve_chunks
+from services.injection_detector import sanitize_prompt
 from typing import List, Optional
 import os
 import json
@@ -59,8 +60,9 @@ async def query_paper(req: QueryRequest):
         raise HTTPException(status_code=404, detail="해당 논문을 찾을 수 없습니다.")
 
     prompt = build_prompt(chunks, req.question)
+    safe_prompt = sanitize_prompt(prompt)
 
     if LLM_BACKEND == "gemini":
-        return StreamingResponse(generate_gemini(prompt), media_type="text/plain")
+        return StreamingResponse(generate_gemini(safe_prompt), media_type="text/plain")
     else:
-        return StreamingResponse(generate_ollama(prompt), media_type="text/plain")
+        return StreamingResponse(generate_ollama(safe_prompt), media_type="text/plain")

@@ -16,6 +16,20 @@ export async function getPapers() {
   return res.json();
 }
 
+export async function deletePaper(paper_id: string) {
+  const res = await fetch(`${BASE_URL}/papers/${paper_id}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+export async function analyzeSecurity(paper_id: string) {
+  const res = await fetch(`${BASE_URL}/security/${paper_id}`);
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
 export async function queryPaper(
   paper_id: string,
   question: string,

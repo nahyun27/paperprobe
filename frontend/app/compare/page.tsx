@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { getPapers, comparePapers } from "@/lib/api";
+import { getPapers, comparePapers, deletePaper } from "@/lib/api";
 import Link from "next/link";
 
 interface Paper {
@@ -44,6 +44,23 @@ export default function ComparePage() {
     setLoading(false);
   }
 
+  async function handleDelete(e: React.MouseEvent, id: string) {
+    e.stopPropagation();
+    if (!window.confirm("정말 이 논문을 삭제하시겠습니까?")) return;
+    try {
+      await deletePaper(id);
+      setSelected((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+      const data = await getPapers();
+      setPapers(data);
+    } catch (err) {
+      alert("삭제 실패: " + err);
+    }
+  }
+
   return (
     <div className="flex h-screen bg-gray-950 text-gray-100">
       {/* 사이드바 */}
@@ -56,17 +73,24 @@ export default function ComparePage() {
 
         <div className="flex flex-col gap-2 overflow-y-auto flex-1">
           {papers.map((p) => (
-            <button
-              key={p.id}
-              onClick={() => togglePaper(p.id)}
-              className={`text-left px-3 py-2 rounded-lg text-sm truncate transition-colors ${
-                selected.has(p.id)
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-800 hover:bg-gray-700 text-gray-300"
-              }`}
-            >
-              {selected.has(p.id) ? "✓ " : ""}📄 {p.filename}
-            </button>
+            <div key={p.id} className="flex items-center gap-2">
+              <button
+                onClick={() => togglePaper(p.id)}
+                className={`flex-1 text-left px-3 py-2 rounded-lg text-sm truncate transition-colors ${selected.has(p.id)
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-800 hover:bg-gray-700 text-gray-300"
+                  }`}
+              >
+                {selected.has(p.id) ? "✓ " : ""}📄 {p.filename}
+              </button>
+              <button
+                onClick={(e) => handleDelete(e, p.id)}
+                className="p-2 text-gray-400 hover:text-red-400 transition-colors"
+                title="삭제"
+              >
+                ✕
+              </button>
+            </div>
           ))}
         </div>
 

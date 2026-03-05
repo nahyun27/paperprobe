@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { uploadPaper, getPapers, queryPaper } from "@/lib/api";
+import { uploadPaper, getPapers, queryPaper, deletePaper, analyzeSecurity } from "@/lib/api";
 
 interface Paper {
   id: string;
@@ -20,6 +20,9 @@ export default function Home() {
   const [input, setInput] = useState("");
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [securityData, setSecurityData] = useState<any>(null);
+  const [expandedBanner, setExpandedBanner] = useState(false);
+
   const fileRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -30,6 +33,14 @@ export default function Home() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  useEffect(() => {
+    if (selectedPaper) {
+      setSecurityData(null);
+      setExpandedBanner(false);
+      analyzeSecurity(selectedPaper.id).then(setSecurityData).catch(console.error);
+    }
+  }, [selectedPaper]);
 
   async function fetchPapers() {
     const data = await getPapers();
@@ -71,6 +82,21 @@ export default function Home() {
     setLoading(false);
   }
 
+  async function handleDelete(e: React.MouseEvent, id: string) {
+    e.stopPropagation();
+    if (!window.confirm("정말 이 논문을 삭제하시겠습니까?")) return;
+    try {
+      await deletePaper(id);
+      if (selectedPaper?.id === id) {
+        setSelectedPaper(null);
+        setMessages([]);
+      }
+      await fetchPapers();
+    } catch (err) {
+      alert("삭제 실패: " + err);
+    }
+  }
+
   return (
     <div className="flex h-screen bg-gray-950 text-gray-100">
       {/* 사이드바 */}
@@ -88,17 +114,27 @@ export default function Home() {
 
         <div className="flex flex-col gap-2 overflow-y-auto flex-1">
           {papers.map((p) => (
-            <button
-              key={p.id}
-              onClick={() => { setSelectedPaper(p); setMessages([]); }}
-              className={`text-left px-3 py-2 rounded-lg text-sm truncate transition-colors ${
-                selectedPaper?.id === p.id
+            <div key={p.id} className="flex items-center gap-2">
+              <button
+                onClick={() => { setSelectedPaper(p); setMessages([]); }}
+                className={`flex-1 text-left px-3 py-2 rounded-lg text-sm truncate transition-colors ${selectedPaper?.id === p.id
                   ? "bg-blue-600 text-white"
                   : "bg-gray-800 hover:bg-gray-700 text-gray-300"
-              }`}
-            >
-              📄 {p.filename}
-            </button>
+                  }`}
+              >
+                {securityData?.paper_id === p.id && (
+                  <span className="mr-1">{securityData.is_safe ? "✓ " : "⚠️ "}</span>
+                )}
+                📄 {p.filename}
+              </button>
+              <button
+                onClick={(e) => handleDelete(e, p.id)}
+                className="p-2 text-gray-400 hover:text-red-400 transition-colors"
+                title="삭제"
+              >
+                ✕
+              </button>
+            </div>
           ))}
         </div>
 
@@ -109,15 +145,52 @@ export default function Home() {
           <a href="/graph" className="text-center bg-gray-800 hover:bg-gray-700 py-2 rounded-lg text-sm">
             🕸️ 관계도 그래프
           </a>
+          <a href="/security" className="text-center bg-gray-800 hover:bg-gray-700 py-2 rounded-lg text-sm">
+            🔐 보안 분석
+          </a>
         </div>
       </div>
 
       {/* 채팅 영역 */}
       <div className="flex-1 flex flex-col">
-        <div className="border-b border-gray-800 px-6 py-4">
+        <div className="border-b border-gray-800 px-6 py-4 flex flex-col gap-2">
           <h2 className="font-semibold text-gray-200">
             {selectedPaper ? `📄 ${selectedPaper.filename}` : "논문을 선택해주세요"}
           </h2>
+
+          {selectedPaper && securityData && (
+            <div className="text-sm">
+              {securityData.is_safe ? (
+                <div className="w-full bg-green-900/40 text-green-400 p-2 rounded flex items-center gap-2">
+                  <span>✓ 안전한 논문입니다</span>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  <button
+                    onClick={() => setExpandedBanner(!expandedBanner)}
+                    className="w-full bg-red-900/40 hover:bg-red-900/60 transition-colors text-red-400 p-2 rounded text-left flex items-center justify-between"
+                  >
+                    <span>⚠️ {securityData.suspicious_chunks.length}개의 의심스러운 구문이 감지됐습니다 (클릭하여 확인)</span>
+                    <span>{expandedBanner ? "▲" : "▼"}</span>
+                  </button>
+
+                  {expandedBanner && (
+                    <div className="bg-red-950/50 rounded flex flex-col gap-2 p-2 max-h-48 overflow-y-auto">
+                      {securityData.suspicious_chunks.map((item: any, idx: number) => (
+                        <div key={idx} className="bg-gray-900 p-3 rounded text-xs text-gray-200 flex flex-col gap-1 border border-red-900/30">
+                          <div className="flex justify-between items-center text-red-400 mb-1">
+                            <span>Score: {item.max_similarity.toFixed(3)}</span>
+                            <span className="uppercase px-1.5 py-0.5 bg-red-900/60 rounded">{item.risk_level}</span>
+                          </div>
+                          <div>{item.chunk_text.slice(0, 200)}...</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 py-4 flex flex-col gap-4">
@@ -128,11 +201,10 @@ export default function Home() {
           )}
           {messages.map((m, i) => (
             <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-              <div className={`max-w-2xl px-4 py-3 rounded-2xl text-sm whitespace-pre-wrap ${
-                m.role === "user"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-800 text-gray-100"
-              }`}>
+              <div className={`max-w-2xl px-4 py-3 rounded-2xl text-sm whitespace-pre-wrap ${m.role === "user"
+                ? "bg-blue-600 text-white"
+                : "bg-gray-800 text-gray-100"
+                }`}>
                 {m.content || (loading ? "▋" : "")}
               </div>
             </div>
